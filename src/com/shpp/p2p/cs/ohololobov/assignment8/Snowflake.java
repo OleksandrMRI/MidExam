@@ -4,27 +4,34 @@ import acm.graphics.GOval;
 
 import java.awt.*;
 
+import static com.shpp.p2p.cs.ohololobov.assignment8.MidExamPart1.rgen;
+
 /**
  * This class describe structure and logic of Snowflake. Snowflake extends GOval
  */
 public class Snowflake extends GOval {
+    public static final int TIMES_OF_SCALING = 10;
     private final double vY;
     private int scalingCounter;
     private double scalingCoefficient = 0.95;
+    private double diameter;
+    private int scalingLoop;
 
     /**
      * private constructor of class Snowflake
      *
-     * @param offsetX   offset x coordinate
-     * @param offsetY   offset y coordinate
-     * @param diameter1 horizontal diameter of Snowflake
-     * @param diameter2 vertical diameter of Snowflake
-     * @param vY        vertical velocity of snowflake fall
+     * @param offsetX            offset x coordinate
+     * @param offsetY            offset y coordinate
+     * @param horizontalDiameter horizontal diameter of Snowflake
+     * @param verticalDiameter   vertical diameter of Snowflake
+     * @param vY                 vertical velocity of snowflake fall
      */
-    private Snowflake(double offsetX, double offsetY, double diameter1, double diameter2, double vY) {
-        super(offsetX, offsetY, diameter1, diameter2);
+    private Snowflake(double offsetX, double offsetY, double horizontalDiameter, double verticalDiameter, double vY) {
+        super(offsetX, offsetY, horizontalDiameter, verticalDiameter);
         this.vY = vY;
         this.scalingCounter = 0;
+        this.diameter = verticalDiameter;
+        this.scalingLoop = TIMES_OF_SCALING + (int) (TIMES_OF_SCALING * rgen.nextDouble());
     }
 
     /**
@@ -73,11 +80,24 @@ public class Snowflake extends GOval {
     }
 
     /**
-     * The method sets new value of scaling coefficient, when scaling dirrection must be changed
+     * The method sets new value of scaling coefficient, when scaling direction must be changed
      *
      * @param scalingCoefficient coefficient of horizontal scaling of snowflake
      */
     public void setScalingCoefficient(double scalingCoefficient) {
         this.scalingCoefficient = scalingCoefficient;
+    }
+
+    /**
+     * Getter for value of diameter
+     *
+     * @return double snowflake diameter
+     */
+    public double getDiameter() {
+        return diameter;
+    }
+
+    public int getScalingLoop() {
+        return scalingLoop;
     }
 }

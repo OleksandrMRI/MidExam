@@ -15,7 +15,7 @@ public class MidExamPart1 extends WindowProgram {
     /**
      * instance of RandomGenerator is using in many methods
      */
-    private static final RandomGenerator rgen = RandomGenerator.getInstance();
+    public static final RandomGenerator rgen = RandomGenerator.getInstance();
     /**
      * maximal value of diameter of SnowFlakes
      */
@@ -35,11 +35,11 @@ public class MidExamPart1 extends WindowProgram {
     /**
      * value of pause duration
      */
-    private static final double PAUSE_DURATION = 60;
+    private static final double PAUSE_DURATION = 40;
     /**
      * maximal number of flakes that are creating/langth of array of SnowFlakes
      */
-    private static final int NUM_FLAKES = 300;
+    private static final int NUM_FLAKES = 10000;
     /**
      * value vertical velocity consist of two parts immutable velocity part and random mutable velocity part.
      * This is constant of immutable part
@@ -50,7 +50,6 @@ public class MidExamPart1 extends WindowProgram {
      * This is constant of base random mutable velocity part
      */
     private static final double Y_VELOCITY_VARIABLE_PART_COEFFICIENT = 1.0;
-    public static final int NUM_SCALE_ITERATIONS = 20;
     /**
      * variable for logic of wind imitation activation
      */
@@ -113,7 +112,7 @@ public class MidExamPart1 extends WindowProgram {
                 moveSnowflake(curentSnowflake, currentSnowflakeOffsetY);
 
                 swirlSnowflake(curentSnowflake);
-                reCreationFallenSnowflakes(snowflakes, i);
+                teleportFallenSnowflake(snowflakes, i);
             }
 
             pause(PAUSE_DURATION);
@@ -144,7 +143,7 @@ public class MidExamPart1 extends WindowProgram {
         double scalingCoefficient = curentSnowflake.getScalingCoefficient();
         curentSnowflake.scale(curentSnowflake.getScalingCoefficient(), 1);
 
-        if (curentSnowflake.incrementScalingCounter() % NUM_SCALE_ITERATIONS == 0) {
+        if (curentSnowflake.incrementScalingCounter() % curentSnowflake.getScalingLoop() == 0) {
             curentSnowflake.setScalingCoefficient(1 / scalingCoefficient);
         }
     }
@@ -155,11 +154,12 @@ public class MidExamPart1 extends WindowProgram {
      * @param snowflakes array of snowflake
      * @param i          index of current snowflake
      */
-    private void reCreationFallenSnowflakes(Snowflake[] snowflakes, int i) {
+    private void teleportFallenSnowflake(Snowflake[] snowflakes, int i) {
         if (snowflakes[i].getY() >= getHeight()) {
-            remove(snowflakes[i]);
-            snowflakes[i] = createSnowFlake();
-            add(snowflakes[i]);
+            double diameter = snowflakes[i].getDiameter();
+            double nexOffsetX = (getWidth() - diameter) * rgen.nextDouble();
+            double nextOffsetY = -diameter;
+            snowflakes[i].setLocation(nexOffsetX,nextOffsetY);
         }
     }
 

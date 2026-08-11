@@ -6,68 +6,176 @@ import com.shpp.cs.a.graphics.WindowProgram;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
+/**
+ * The program create animation:
+ * Circles(snowFlakes) fallen down from top of canvas with sinusoid track und spin. Every circle has own random color, random track
+ * with own random amplitude of deviation, own random velocity.
+ */
 public class MidExamPart1 extends WindowProgram {
+    /**
+     * instance of RandomGenerator is using in many methods
+     */
     private static final RandomGenerator rgen = RandomGenerator.getInstance();
-    private static final double MAX_DIAMETER = 30.0;
-    private static final double MIN_DIAMETER = 5.0;
-    public static final double SINUS_FUNCTION_COEFFICIENT = 10.0;
-    public static final double X_SPEED_REPHASE_COEFFICIENT = 5.0;
-    public static final double PAUSE_DURATION = 0.1;
-    public static final int NUM_FLAKES = 30;
-    public static final SnowFlake[] snowFlakes = new SnowFlake[NUM_FLAKES];
-    public static final double MIN_Y_VELOCITY = 1.0;
-    public static final double Y_VELOCITY_VARIABLE_PART_COEFFICIENT = 1.0;
-    public static final int RETARDATION_FACTOR = 10;
-    private SnowFlake snowFlake;
+    /**
+     * maximal value of diameter of SnowFlakes
+     */
+    private static final double MAX_DIAMETER = 40.0;
+    /**
+     * manimal value of diameter of SnowFlakes
+     */
+    private static final double MIN_DIAMETER = 10.0;
+    /**
+     * coefficient to increasing value of sinus, to increase swinging of SnowFlakes
+     */
+    private static final double SINUS_FUNCTION_INCREASE_COEFFICIENT = 10.0;
+    /**
+     * this coefficient change frequency an amplitude of swinging of SnowFlakes
+     */
+    private static final double X_SPEED_REPHASE_COEFFICIENT = 5.0;
+    /**
+     * value of pause duration
+     */
+    private static final double PAUSE_DURATION = 60;
+    /**
+     * maximal number of flakes that are creating/langth of array of SnowFlakes
+     */
+    private static final int NUM_FLAKES = 300;
+    /**
+     * array of SnowFlakes
+     */
+    private static final Snowflake[] SNOW_FLAKES = new Snowflake[NUM_FLAKES];
+    /**
+     * value vertical velocity consist of two parts immutable velocity part and random mutable velocity part.
+     * This is constant of immutable part
+     */
+    private static final double MIN_Y_VELOCITY = 1.0;
+    /**
+     * value vertical velocity consist of two parts immutable velocity part and random mutable velocity part.
+     * This is constant of base random mutable velocity part
+     */
+    private static final double Y_VELOCITY_VARIABLE_PART_COEFFICIENT = 1.0;
+    public static final int NUM_SCALE_ITERATIONS = 20;
+    /**
+     * variable for logic of wind imitation activation
+     */
     private boolean isWind = false;
+    /**
+     * value of absolute wind velocity to manage shift velocity during wind imitation
+     */
     private double windVelocity = 5;
+    /**
+     * variable for adding wind to horizontal velocity
+     */
     private double windSpeed;
-    private double invertingScalingCoefficient = 0.1;
-    private double scalingCoefficient=1;
 
+    /**
+     * THe method adds mouse interactors and invokes the makeSnowFall() method, that contains logic of program
+     */
     public void run() {
         addMouseListeners();
         makeSnowFall();
     }
 
+    /**
+     * The method contain logic of program:
+     * creating array of SnowFlakes
+     * and mowing of SnowFlakes
+     */
     private void makeSnowFall() {
-        for (int i = 0; i < snowFlakes.length; i++) {
-            snowFlakes[i] = createSnowFlake();
-            add(snowFlakes[i]);
-            for (int j = 0; j < RETARDATION_FACTOR; j++) {
-                moveSnowFlakes(snowFlakes);
-            }
+        Snowflake[] snowflakes = fillSnowFlakesArray();
+        moveSnowflakes(snowflakes);
+    }
+
+    /**
+     * The method create SnowFlakes, adds tay upper canvas and put they to array
+     *
+     * @return filled array with SnowFlakes
+     */
+    private Snowflake[] fillSnowFlakesArray() {
+        Snowflake[] snowflakes = new Snowflake[NUM_FLAKES];
+
+        for (int i = 0; i < snowflakes.length; i++) {
+            snowflakes[i] = createSnowFlake();
+            add(snowflakes[i]);
         }
+
+        return snowflakes;
+    }
+
+    /**
+     * THe method contains logic of moving, swirling snowflakes and recreating of fallen snowflakes
+     *
+     * @param snowflakes array with all snowflakes
+     */
+    private void moveSnowflakes(Snowflake[] snowflakes) {
         while (true) {
-            moveSnowFlakes(snowFlakes);
-        }
-    }
 
-    private void moveSnowFlakes(SnowFlake[] snowFlakes) {
-        double snowFlakeOffsetY;
-        double x;
-//        scalingCoefficient -= invertingScalingCoefficient;
-//        if(scalingCoefficient <0.3|| scalingCoefficient >0.9) invertingScalingCoefficient = -invertingScalingCoefficient;
-        for (int i = 0; i < snowFlakes.length; i++) {
-            if (snowFlakes[i] != null) {
-                snowFlakeOffsetY = snowFlakes[i].getY();
+            for (int i = 0; i < snowflakes.length; i++) {
+                Snowflake curentSnowflake = snowflakes[i];
+                double currentSnowflakeOffsetY = curentSnowflake.getY();
 
-                x = snowFlakes[i].getX() + Math.sin(snowFlakeOffsetY / SINUS_FUNCTION_COEFFICIENT) * X_SPEED_REPHASE_COEFFICIENT+windSpeed;
-                snowFlakeOffsetY += snowFlakes[i].getVY();;
-                snowFlakes[i].setLocation(x, snowFlakeOffsetY);
-//                snowFlakes[i].scale(scalingCoefficient,1);
+                moveSnowflake(curentSnowflake, currentSnowflakeOffsetY);
 
-                if (snowFlakeOffsetY >= getHeight()) {
-                    remove(snowFlakes[i]);
-                    snowFlakes[i] = createSnowFlake();
-                    add(snowFlakes[i]);
-                } else {
-                    pause(PAUSE_DURATION);
-                }
+                swirlSnowflake(curentSnowflake);
+                reCreationFallenSnowflakes(snowflakes, i);
             }
+
+            pause(PAUSE_DURATION);
         }
     }
 
+    /**
+     * The method contains logic of movement of one snowflake
+     *
+     * @param curentSnowflake current snowflake from array to move
+     * @param currentOffsetY  coordinate y of current snowflake
+     * @return
+     */
+    private double moveSnowflake(Snowflake curentSnowflake, double currentOffsetY) {
+
+        double nextOffsetY = currentOffsetY + curentSnowflake.getVY();
+        double newOffsetX = curentSnowflake.getX() + Math.sin(nextOffsetY / SINUS_FUNCTION_INCREASE_COEFFICIENT)
+                * X_SPEED_REPHASE_COEFFICIENT + windSpeed;
+
+        curentSnowflake.setLocation(newOffsetX, nextOffsetY);
+
+        return nextOffsetY;
+    }
+
+    /**
+     * The method includs logic of imitation of snowflake swirling, using method scale in x direction
+     *
+     * @param curentSnowflake current snowflake that is in processing
+     */
+    private static void swirlSnowflake(Snowflake curentSnowflake) {
+        double scalingCoefficient = curentSnowflake.getScalingCoefficient();
+        curentSnowflake.scale(curentSnowflake.getScalingCoefficient(), 1);
+
+        if (curentSnowflake.incrementScalingCounter() % NUM_SCALE_ITERATIONS == 0) {
+            curentSnowflake.setScalingCoefficient(1 / scalingCoefficient);
+        }
+    }
+
+    /**
+     * logic of snowflake re-creation, if it already lowers bottom of canvas
+     *
+     * @param snowflakes array of snowflake
+     * @param i          index of current snowflake
+     */
+    private void reCreationFallenSnowflakes(Snowflake[] snowflakes, int i) {
+        if (snowflakes[i].getY() >= getHeight()) {
+            remove(snowflakes[i]);
+            snowflakes[i] = createSnowFlake();
+            add(snowflakes[i]);
+        }
+    }
+
+    /**
+     * Mouse click changes boolean variable isWind, that manages activation of wind imitation,
+     * and change value of wind as positive? negative or zero
+     *
+     * @param l the event to be processed
+     */
     public void mouseClicked(MouseEvent l) {
         isWind = !isWind;
         if (rgen.nextBoolean()) {
@@ -76,51 +184,32 @@ public class MidExamPart1 extends WindowProgram {
         windSpeed = getWindSpeed();
     }
 
+    /**
+     * method return value of wind according to value of boolean isWind
+     *
+     * @return value of wind speed
+     */
     private double getWindSpeed() {
-        double windSpeed=0;
         if (isWind) {
-            windSpeed = windVelocity;
+            return windSpeed = windVelocity;
         }
-        return windSpeed;
+        return 0;
     }
 
-    private SnowFlake createSnowFlake() {
+    /**
+     * The method creates one instance of SnowFlake
+     *
+     * @return instance of SnowFlake
+     */
+    private Snowflake createSnowFlake() {
         double diameter = MAX_DIAMETER * rgen.nextDouble();
-        if (diameter < MIN_DIAMETER) {
-            diameter = MIN_DIAMETER;
-        }
+        if (diameter < MIN_DIAMETER) diameter = MIN_DIAMETER;
         double vY = MIN_Y_VELOCITY + Y_VELOCITY_VARIABLE_PART_COEFFICIENT * rgen.nextDouble();
 
         double offsetX = (getWidth() - diameter) * rgen.nextDouble();
-        double offsetY = -diameter;
+        double offsetY = -getHeight() * rgen.nextDouble() - diameter;
         Color colorFlake = rgen.nextColor();
-        SnowFlake snowFlake = SnowFlake.createSnowFlake(offsetX, offsetY, diameter, diameter, vY, colorFlake);
 
-        return snowFlake;
-    }
-
-    private void moveSnowFlake(SnowFlake snowFlake) {
-        double snowFlakeOffsetY = snowFlake.getY();
-        double startSnowFlakeOffsetX = snowFlake.getX();
-        double snowFlakeVY = snowFlake.getVY();
-        double windSpeed = 0;
-        while (true) {
-            windSpeed = getWindSpeed();
-            startSnowFlakeOffsetX += windSpeed;
-            double x = startSnowFlakeOffsetX + Math.sin(snowFlakeOffsetY / SINUS_FUNCTION_COEFFICIENT) * X_SPEED_REPHASE_COEFFICIENT;
-
-            snowFlake.setLocation(x, snowFlakeOffsetY);
-            snowFlakeOffsetY += snowFlakeVY;
-            if (snowFlakeOffsetY >= getHeight()) {
-                remove(snowFlake);
-                snowFlake = createSnowFlake();
-                add(snowFlake);
-                snowFlakeOffsetY = snowFlake.getY();
-                startSnowFlakeOffsetX = snowFlake.getX();
-                snowFlakeVY = snowFlake.getVY();
-            } else {
-                pause(PAUSE_DURATION);
-            }
-        }
+        return Snowflake.createSnowFlake(offsetX, offsetY, diameter, diameter, vY, colorFlake);
     }
 }

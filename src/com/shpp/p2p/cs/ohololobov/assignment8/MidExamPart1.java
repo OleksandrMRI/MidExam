@@ -41,10 +41,6 @@ public class MidExamPart1 extends WindowProgram {
      */
     private static final int NUM_FLAKES = 300;
     /**
-     * array of SnowFlakes
-     */
-    private static final Snowflake[] SNOW_FLAKES = new Snowflake[NUM_FLAKES];
-    /**
      * value vertical velocity consist of two parts immutable velocity part and random mutable velocity part.
      * This is constant of immutable part
      */
@@ -129,17 +125,14 @@ public class MidExamPart1 extends WindowProgram {
      *
      * @param curentSnowflake current snowflake from array to move
      * @param currentOffsetY  coordinate y of current snowflake
-     * @return
      */
-    private double moveSnowflake(Snowflake curentSnowflake, double currentOffsetY) {
+    private void moveSnowflake(Snowflake curentSnowflake, double currentOffsetY) {
 
         double nextOffsetY = currentOffsetY + curentSnowflake.getVY();
         double newOffsetX = curentSnowflake.getX() + Math.sin(nextOffsetY / SINUS_FUNCTION_INCREASE_COEFFICIENT)
                 * X_SPEED_REPHASE_COEFFICIENT + windSpeed;
 
         curentSnowflake.setLocation(newOffsetX, nextOffsetY);
-
-        return nextOffsetY;
     }
 
     /**
